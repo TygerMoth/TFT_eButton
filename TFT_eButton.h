@@ -48,7 +48,6 @@ class TFT_eButton : public TFT_eSPI {
   uint32_t getReleaseTime(void){ return _releaseTime; }
 
 
-
   void     drawButton(bool inverted = false, String long_name = "");
   void     drawSmoothButton(bool inverted = false, int16_t outlinewidth = -1, uint32_t bgcolor = 0x00FFFFFF, String long_name = "");
   void     enable();
