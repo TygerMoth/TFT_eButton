@@ -56,6 +56,8 @@ class TFT_eButton : public TFT_eSPI {
   void     hide();
   void     draw();
   void     erase();
+  void     toggleEnabled();
+  void     toggleVisible();
   void     drawDisabled();
   bool     contains(int16_t x, int16_t y);
 
