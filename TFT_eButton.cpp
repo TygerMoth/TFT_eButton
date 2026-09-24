@@ -12,6 +12,8 @@ TFT_eButton::TFT_eButton(TFT_eSPI *tft) {
   _label[9]  = '\0';
   currstate  = false;
   laststate  = false;
+  enblstate  = false;
+  vsblstate  = false;
   _inverted  = false;
 }
 
@@ -148,12 +150,85 @@ void TFT_eButton::drawSmoothButton(bool inverted, int16_t outlinewidth, uint32_t
   }
 }
 
+void TFT_eButton::drawDisabledInternal() {
+uint8_t r = min(_w, _h) / 4; // Corner radius
+  if (outlinewidth > 0) _gfx->fillSmoothRoundRect(_x1, _y1, _w, _h, r, TFT_DARKGREY, _bgcolor);
+  _gfx->fillSmoothRoundRect(_x1+_outlinewidth, _y1+_outlinewidth, _w-(2*_outlinewidth), _h-(2*_outlinewidth), r-_outlinewidth, TFT_LIGHTGREY, TFT_DARKGREY);
+
+  if (_gfx->textfont == 255) {
+    _gfx->setCursor(_x1 + (_w / 8),
+                    _y1 + (_h / 4));
+    _gfx->setTextColor(TFT_DARKGREY);
+    _gfx->setTextSize(_textsize);
+    _gfx->print(_label);
+  }
+  else {
+    _gfx->setTextColor(TFT_DARKGREY, TFT_LIGHTGREY);
+    _gfx->setTextSize(_textsize);
+
+    uint8_t tempdatum = _gfx->getTextDatum();
+    _gfx->setTextDatum(_textdatum);
+    uint16_t tempPadding = _gfx->getTextPadding();
+    _gfx->setTextPadding(0);
+
+    if (long_name == "")
+      _gfx->drawString(_label, _x1 + (_w/2) + _xd, _y1 + (_h/2) - 4 + _yd);
+    else
+      _gfx->drawString(long_name, _x1 + (_w/2) + _xd, _y1 + (_h/2) - 4 + _yd);
+
+    _gfx->setTextDatum(tempdatum);
+    _gfx->setTextPadding(tempPadding);
+  }
+}
+
+void TFT_eButton::disable() { // Disable button (prevent interaction)
+  enblstate = false;
+  drawDisabled();
+}
+
+void TFT_eButton::enable() { // Enable button (allow interaction)
+  enblstate = true;
+  draw();
+}
+
+void TFT_eButton::show() { // Show button (make visible)
+  vsblstate = true;
+  draw();
+}
+
+void TFT_eButton::hide() { // Hide button (make invisible)
+  vsblstate = false;
+  erase();
+}
+
+void TFT_eButton::erase() {  // Erase button
+  _gfx->fillRect(_x1, _y1, _w, _h, bgColor);
+}
+
+void TFT_eButton::toggleEnabled() {  // Toggle enable/disable
+  enblstate = !enblstate;
+  draw();
+}
+
+void TFT_eButton::toggleVisible() {  // Toggle visible/hidden
+  vsblstate = !vsblstate;
+  if (vsblstate) draw();
+  else erase();
+}
+
+void TFT_eButton::drawDisabled() {  // Draw disabled appearance
+    if (!vsblstate) return;
+    drawDisabledInternal();
+}
+
 bool TFT_eButton::contains(int16_t x, int16_t y) {
+  if (!vsblstate || !enblstate) return false;
   return ((x >= _x1) && (x < (_x1 + _w)) &&
           (y >= _y1) && (y < (_y1 + _h)));
 }
 
 void TFT_eButton::press(bool p) {
+  if (!vsblstate || !enblstate) return false;
   laststate = currstate;
   currstate = p;
 }
