@@ -51,6 +51,13 @@ class TFT_eButton : public TFT_eSPI {
 
   void     drawButton(bool inverted = false, String long_name = "");
   void     drawSmoothButton(bool inverted = false, int16_t outlinewidth = -1, uint32_t bgcolor = 0x00FFFFFF, String long_name = "");
+  void     enable();
+  void     disable();
+  void     show();
+  void     hide();
+  void     draw();
+  void     erase();
+  void     drawDisabled();
   bool     contains(int16_t x, int16_t y);
 
   void     press(bool p);
@@ -71,7 +78,8 @@ class TFT_eButton : public TFT_eSPI {
   uint16_t _outlinecolor, _fillcolor, _textcolor, _outlinewidth, _bgcolor;
   char     _label[10]; // Button text is 9 chars maximum unless long_name used
   uint32_t _pressTime, _releaseTime;
-  bool  _inverted, currstate, laststate; // Button states
+  bool  _inverted, currstate, laststate, enblstate, vsblstate; // Button states
+  void drawDisabledInternal();
 };
 
 #endif
