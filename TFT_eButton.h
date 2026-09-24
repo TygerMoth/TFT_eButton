@@ -50,15 +50,15 @@ class TFT_eButton : public TFT_eSPI {
 
   void     drawButton(bool inverted = false, String long_name = "");
   void     drawSmoothButton(bool inverted = false, int16_t outlinewidth = -1, uint32_t bgcolor = 0x00FFFFFF, String long_name = "");
-  void     enable();
-  void     disable();
-  void     show();
-  void     hide();
-  void     draw();
-  void     erase();
-  void     toggleEnabled();
-  void     toggleVisible();
-  void     drawDisabled();
+  void     enable(void);
+  void     disable(void);
+  void     show(void);
+  void     hide(void);
+  void     draw(void);
+  void     erase(void);
+  void     toggleEnabled(void);
+  void     toggleVisible(void);
+  void     drawDisabled(void);
   bool     contains(int16_t x, int16_t y);
 
   void     press(bool p);
