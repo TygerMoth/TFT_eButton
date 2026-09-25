@@ -11,6 +11,7 @@
 // The library uses functions present in TFT_eSPI
 // https://github.com/Bodmer/TFT_eSPI
 ****************************************************************************************
+*** Modified label datum calculation of _yd to allow button heights as small as 12 px
 *** Added Enabled, Visible and Smooth states,
 *** with enable(), disable(), show(), hide() and added redraw() methods,
 *** and modification to contains() method to process only enabled and visible buttons.
@@ -82,7 +83,7 @@ class TFT_eButton : public TFT_eSPI {
   uint16_t _outlinecolor, _fillcolor, _textcolor, _outlinewidth, _bgcolor;
   char     _label[10]; // Button text is 9 chars maximum unless long_name used
   uint32_t _pressTime, _releaseTime;
-  bool     _inverted, currstate, laststate, enblstate, vsblstate, smthstate; // Button states
+  bool     _inverted, _currstate, _laststate, _enblstate, _vsblstate, _smthstate; // Button states
   void     redrawDisabled(void);
   void     redrawDisabledInternal(void);
   void     redraw(void);
