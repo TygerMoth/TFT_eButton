@@ -4,6 +4,7 @@
 ** Code for the GFX button UI element
 ** Grabbed from Adafruit_GFX library and enhanced to handle any label font
 ****************************************************************************************
+*** Modified label datum calculation of _yd to allow button heights as small as 12 px
 *** Added Enabled, Visible and Smooth states,
 *** with enable(), disable(), show(), hide() and added redraw() methods,
 *** and modification to contains() method to process only enabled and visible buttons.
@@ -15,11 +16,11 @@ TFT_eButton::TFT_eButton(TFT_eSPI *tft) {
   _yd        = 0;
   _textdatum = MC_DATUM;
   _label[9]  = '\0';
-  currstate  = false;
-  laststate  = false;
-  enblstate  = false;
-  vsblstate  = false;
-  smthstate  = true;
+  _currstate  = false;
+  _laststate  = false;
+  _enblstate  = false;
+  _vsblstate  = false;
+  _smthstate  = true;
   _inverted  = false;
 }
 
@@ -101,14 +102,14 @@ void TFT_eButton::drawButton(bool inverted, String long_name) {
     _gfx->setTextPadding(0);
 
     if (long_name == "")
-      _gfx->drawString(_label, _x1 + (_w/2) + _xd, _y1 + (_h/2) + _yd); // changed from (_h/2) - 4 + _yd to (_h/2) - 4 + _yd
+      _gfx->drawString(_label, _x1 + (_w/2) + _xd, _y1 + (_h/2) + _yd); // changed from (_h/2) - 4 + _yd to (_h/2) + _yd
     else
       _gfx->drawString(long_name, _x1 + (_w/2) + _xd, _y1 + (_h/2) + _yd); // after the change above to _yd = min(..., 5)
 
     _gfx->setTextDatum(tempdatum);
     _gfx->setTextPadding(tempPadding);
   }
-  smthstate = false;
+  _smthstate = false;
 }
 
 void TFT_eButton::drawSmoothButton(bool inverted, int16_t outlinewidth, uint32_t bgcolor, String long_name) {
@@ -155,7 +156,7 @@ void TFT_eButton::drawSmoothButton(bool inverted, int16_t outlinewidth, uint32_t
     _gfx->setTextDatum(tempdatum);
     _gfx->setTextPadding(tempPadding);
   }
-  smthstate = true;
+  _smthstate = true;
 }
 
 void TFT_eButton::redrawDisabledInternal() {
@@ -188,27 +189,27 @@ uint8_t r = min(_w, _h) / 4; // Corner radius
 }
 
 void TFT_eButton::redraw() {
-  if(smthstate) drawSmoothButton(_inverted, _outlinewidth, _bgcolor, _label);
+  if(_smthstate) drawSmoothButton(_inverted, _outlinewidth, _bgcolor, _label);
   else drawButton(_inverted, _label);
 }
 
 void TFT_eButton::disable() { // Disable button (prevent interaction)
-  enblstate = false;
+  _enblstate = false;
   redrawDisabled();
 }
 
 void TFT_eButton::enable() { // Enable button (allow interaction)
-  enblstate = true;
+  _enblstate = true;
   redraw();
 }
 
 void TFT_eButton::show() { // Show button (make visible)
-  vsblstate = true;
+  _vsblstate = true;
   redraw();
 }
 
 void TFT_eButton::hide() { // Hide button (make invisible)
-  vsblstate = false;
+  _vsblstate = false;
   erase();
 }
 
@@ -217,33 +218,33 @@ void TFT_eButton::erase() {  // Erase button
 }
 
 void TFT_eButton::toggleEnabled() {  // Toggle enable/disable
-  enblstate = !enblstate;
+  _enblstate = !_enblstate;
   redraw();
 }
 
 void TFT_eButton::toggleVisible() {  // Toggle visible/hidden
-  vsblstate = !vsblstate;
-  if (vsblstate) redraw();
+  _vsblstate = !_vsblstate;
+  if (_vsblstate) redraw();
   else erase();
 }
 
 void TFT_eButton::redrawDisabled() {  // Draw disabled appearance
-    if (vsblstate) redrawDisabledInternal();
+    if (_vsblstate) redrawDisabledInternal();
 }
 
 bool TFT_eButton::contains(int16_t x, int16_t y) {
-  if (!vsblstate || !enblstate) return false;
+  if (!_vsblstate || !_enblstate) return false;
   return ((x >= _x1) && (x < (_x1 + _w)) &&
           (y >= _y1) && (y < (_y1 + _h)));
 }
 
 void TFT_eButton::press(bool p) {
-  if (vsblstate && enblstate) { // ignore press(T/F) if not visible or enabled
-    laststate = currstate;
-    currstate = p;
+  if (_vsblstate && _enblstate) { // ignore press(T/F) if not visible or enabled
+    _laststate = _currstate;
+    _currstate = p;
   }
 }
 
-bool TFT_eButton::isPressed()    { return currstate; }
-bool TFT_eButton::justPressed()  { return (currstate && !laststate); }
-bool TFT_eButton::justReleased() { return (!currstate && laststate); }
+bool TFT_eButton::isPressed()    { return _currstate; }
+bool TFT_eButton::justPressed()  { return (_currstate && !_laststate); }
+bool TFT_eButton::justReleased() { return (!_currstate && _laststate); }
