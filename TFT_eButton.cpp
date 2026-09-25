@@ -3,6 +3,11 @@
 /***************************************************************************************
 ** Code for the GFX button UI element
 ** Grabbed from Adafruit_GFX library and enhanced to handle any label font
+****************************************************************************************
+*** Added Enabled, Visible and Smooth states,
+*** with enable(), disable(), show(), hide() and added redraw() methods,
+*** and modification to contains() method to process only enabled and visible buttons.
+*** Modified Sep 23, 2026 - Larry Coffey
 ***************************************************************************************/
 TFT_eButton::TFT_eButton(TFT_eSPI *tft) {
   _gfx       = tft;
@@ -14,6 +19,7 @@ TFT_eButton::TFT_eButton(TFT_eSPI *tft) {
   laststate  = false;
   enblstate  = false;
   vsblstate  = false;
+  smthstate  = true;
   _inverted  = false;
 }
 
@@ -52,10 +58,10 @@ void TFT_eButton::initButtonUL(int16_t x1, int16_t y1, uint16_t w, uint16_t h, u
 }
 
 // Adjust text datum and x, y deltas
-void TFT_eButton::setLabelDatum(int16_t x_delta, int16_t y_delta, uint8_t datum)
-{
+void TFT_eButton::setLabelDatum(int16_t x_delta, int16_t y_delta, uint8_t datum) {
+  int16_t _yd_min = 5; // added int16_t vartiable _yd_min = 5, for minimum of 12 px height buttons
   _xd        = x_delta;
-  _yd        = y_delta;
+  _yd        = max(y_delta, _yd_min); // changed from y_delta to max(y_delta, _yd_min)
   _textdatum = datum;
 }
 
@@ -95,13 +101,14 @@ void TFT_eButton::drawButton(bool inverted, String long_name) {
     _gfx->setTextPadding(0);
 
     if (long_name == "")
-      _gfx->drawString(_label, _x1 + (_w/2) + _xd, _y1 + (_h/2) - 4 + _yd);
+      _gfx->drawString(_label, _x1 + (_w/2) + _xd, _y1 + (_h/2) + _yd); // changed from (_h/2) - 4 + _yd to (_h/2) - 4 + _yd
     else
-      _gfx->drawString(long_name, _x1 + (_w/2) + _xd, _y1 + (_h/2) - 4 + _yd);
+      _gfx->drawString(long_name, _x1 + (_w/2) + _xd, _y1 + (_h/2) + _yd); // after the change above to _yd = min(..., 5)
 
     _gfx->setTextDatum(tempdatum);
     _gfx->setTextPadding(tempPadding);
   }
+  smthstate = false;
 }
 
 void TFT_eButton::drawSmoothButton(bool inverted, int16_t outlinewidth, uint32_t bgcolor, String long_name) {
@@ -141,18 +148,19 @@ void TFT_eButton::drawSmoothButton(bool inverted, int16_t outlinewidth, uint32_t
     _gfx->setTextPadding(0);
 
     if (long_name == "")
-      _gfx->drawString(_label, _x1 + (_w/2) + _xd, _y1 + (_h/2) - 4 + _yd);
+      _gfx->drawString(_label, _x1 + (_w/2) + _xd, _y1 + (_h/2) + _yd); // changed from (_h/2) - 4 + _yd to (_h/2) - 4 + _yd
     else
-      _gfx->drawString(long_name, _x1 + (_w/2) + _xd, _y1 + (_h/2) - 4 + _yd);
+      _gfx->drawString(long_name, _x1 + (_w/2) + _xd, _y1 + (_h/2) + _yd); // after the change above to _yd = min(..., 5)
 
     _gfx->setTextDatum(tempdatum);
     _gfx->setTextPadding(tempPadding);
   }
+  smthstate = true;
 }
 
-void TFT_eButton::drawDisabledInternal() {
+void TFT_eButton::redrawDisabledInternal() {
 uint8_t r = min(_w, _h) / 4; // Corner radius
-  if (outlinewidth > 0) _gfx->fillSmoothRoundRect(_x1, _y1, _w, _h, r, TFT_DARKGREY, _bgcolor);
+  if (_outlinewidth > 0) _gfx->fillSmoothRoundRect(_x1, _y1, _w, _h, r, TFT_DARKGREY, _bgcolor);
   _gfx->fillSmoothRoundRect(_x1+_outlinewidth, _y1+_outlinewidth, _w-(2*_outlinewidth), _h-(2*_outlinewidth), r-_outlinewidth, TFT_LIGHTGREY, TFT_DARKGREY);
 
   if (_gfx->textfont == 255) {
@@ -171,29 +179,32 @@ uint8_t r = min(_w, _h) / 4; // Corner radius
     uint16_t tempPadding = _gfx->getTextPadding();
     _gfx->setTextPadding(0);
 
-    if (long_name == "")
-      _gfx->drawString(_label, _x1 + (_w/2) + _xd, _y1 + (_h/2) - 4 + _yd);
-    else
-      _gfx->drawString(long_name, _x1 + (_w/2) + _xd, _y1 + (_h/2) - 4 + _yd);
+    _gfx->drawString(_label, _x1 + (_w/2) + _xd, _y1 + (_h/2) + _yd); // changed from (_h/2) - 4 + _yd to (_h/2) - 4 + _yd
+
 
     _gfx->setTextDatum(tempdatum);
     _gfx->setTextPadding(tempPadding);
   }
 }
 
+void TFT_eButton::redraw() {
+  if(smthstate) drawSmoothButton(_inverted, _outlinewidth, _bgcolor, _label);
+  else drawButton(_inverted, _label);
+}
+
 void TFT_eButton::disable() { // Disable button (prevent interaction)
   enblstate = false;
-  drawDisabled();
+  redrawDisabled();
 }
 
 void TFT_eButton::enable() { // Enable button (allow interaction)
   enblstate = true;
-  draw();
+  redraw();
 }
 
 void TFT_eButton::show() { // Show button (make visible)
   vsblstate = true;
-  draw();
+  redraw();
 }
 
 void TFT_eButton::hide() { // Hide button (make invisible)
@@ -202,23 +213,22 @@ void TFT_eButton::hide() { // Hide button (make invisible)
 }
 
 void TFT_eButton::erase() {  // Erase button
-  _gfx->fillRect(_x1, _y1, _w, _h, bgColor);
+  _gfx->fillRect(_x1, _y1, _w, _h, _bgcolor);
 }
 
 void TFT_eButton::toggleEnabled() {  // Toggle enable/disable
   enblstate = !enblstate;
-  draw();
+  redraw();
 }
 
 void TFT_eButton::toggleVisible() {  // Toggle visible/hidden
   vsblstate = !vsblstate;
-  if (vsblstate) draw();
+  if (vsblstate) redraw();
   else erase();
 }
 
-void TFT_eButton::drawDisabled() {  // Draw disabled appearance
-    if (!vsblstate) return;
-    drawDisabledInternal();
+void TFT_eButton::redrawDisabled() {  // Draw disabled appearance
+    if (vsblstate) redrawDisabledInternal();
 }
 
 bool TFT_eButton::contains(int16_t x, int16_t y) {
@@ -228,9 +238,10 @@ bool TFT_eButton::contains(int16_t x, int16_t y) {
 }
 
 void TFT_eButton::press(bool p) {
-  if (!vsblstate || !enblstate) return false;
-  laststate = currstate;
-  currstate = p;
+  if (vsblstate && enblstate) { // ignore press(T/F) if not visible or enabled
+    laststate = currstate;
+    currstate = p;
+  }
 }
 
 bool TFT_eButton::isPressed()    { return currstate; }
