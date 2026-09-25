@@ -10,6 +10,11 @@
 //
 // The library uses functions present in TFT_eSPI
 // https://github.com/Bodmer/TFT_eSPI
+****************************************************************************************
+*** Added Enabled, Visible and Smooth states,
+*** with enable(), disable(), show(), hide() and added redraw() methods,
+*** and modification to contains() method to process only enabled and visible buttons.
+*** Modified Sep 23, 2026 - Larry Coffey
 ***************************************************************************************/
 #ifndef _TFT_eButtonH_
 #define _TFT_eButtonH_
@@ -54,11 +59,9 @@ class TFT_eButton : public TFT_eSPI {
   void     disable(void);
   void     show(void);
   void     hide(void);
-  void     draw(void);
   void     erase(void);
   void     toggleEnabled(void);
   void     toggleVisible(void);
-  void     drawDisabled(void);
   bool     contains(int16_t x, int16_t y);
 
   void     press(bool p);
@@ -80,7 +83,9 @@ class TFT_eButton : public TFT_eSPI {
   char     _label[10]; // Button text is 9 chars maximum unless long_name used
   uint32_t _pressTime, _releaseTime;
   bool     _inverted, currstate, laststate, enblstate, vsblstate, smthstate; // Button states
-  void     drawDisabledInternal();
+  void     redrawDisabled(void);
+  void     redrawDisabledInternal(void);
+  void     redraw(void);
 };
 
 #endif
